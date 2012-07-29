@@ -16,12 +16,13 @@ use Filter::Simple;
 
 FILTER_ONLY 
     code => sub {
-	s/#[A-Za-z0-9_#]*\b(?:${CmtRE})\b[A-Za-z0-9_#]*#//aag;	
+	# Try for a shorthand for print?
+	s/#[A-Za-z0-9_#]*\b(?:${CmtRE})\b[A-Za-z0-9_#]*>\s*(.*)$/print <<fFilLTereD\n$1\nfFilLTereD\n;/gm;
+	s/#[A-Za-z0-9_#]*\b(?:${CmtRE})\b[A-Za-z0-9_#]*#//g;
 },
     all => sub {
-	s/^\s*${CmtRE}\s*$//aagms;
-	s/^\s*;\s*<<\s*'${CmtRE}'//aagms;
-	print "(($_))\n";
+	s/^\s*${CmtRE}\s*$//gms;
+	s/^\s*;\s*<<\s*'${CmtRE}'//gms;
 };
 1;
 __END__
@@ -78,6 +79,17 @@ the keyword surrounded by single quotes, and the << must be preceded by a
 semicolon (just in case you have some code that uses a here-string that
 starts on its own line; the semicolon makes the string unusable for
 anything, so it can't be purposeful in your code).
+
+=head2 Print Shorthand
+
+Since most of the time debugging statements are print statements, you can
+save the hassle of typing "print" (or even "say") all the time by ending
+your single-line tag with '>'.  The rest of the line (after whitespace)
+will be taken as a double-quoted string to be printed, followed by a
+newline.  The line is quoted as a here-string, so there shouldn't be any
+problems with accidental end-quoting.
+
+This feature is not available for multi-line uncomments.
 
 =head1 LIMITATIONS
 
