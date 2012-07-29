@@ -6,12 +6,10 @@ use strict;
 my @keywords;
 my $CmtRE;
 sub import {
-    print Dumper \@_;
     my $thispack=shift;
     @keywords=@_;
     @keywords=(grep !/[^A-Za-z0-9_]/, @keywords); # Only single words, no metachars, ok?
     $CmtRE=join q(|),@keywords;
-    print Dumper $CmtRE
 }
 
 use Filter::Simple;
@@ -22,7 +20,8 @@ FILTER_ONLY
 },
     all => sub {
 	s/^\s*${CmtRE}\s*$//aagms;
-	s/^\s*;\s*<<\s*'${CmtRE}\s*;'//aagms;
+	s/^\s*;\s*<<\s*'${CmtRE}'//aagms;
+	print "(($_))\n";
 };
 1;
 __END__
@@ -69,16 +68,16 @@ You can also uncomment multi-line pieces of code which are ordinarily
 commented out by wrapping them in a special "string comment" using Perl
 here-strings.
 
-    ;<<'foo';
+    ;<<'foo'
     print "This code is normally ignored, just shoved into a string.\n";
     foo
-    
+    ;
 
 The string comment header must appear just as shown: on its own line, with
-the keyword surrounded by single quotes and followed by a semicolon, and
-the << must be preceded by a semicolon (just in case you have some code
-that uses a here-string that starts on its own line; the semicolon makes
-the string unusable for anything, so it can't be purposeful in your code).
+the keyword surrounded by single quotes, and the << must be preceded by a
+semicolon (just in case you have some code that uses a here-string that
+starts on its own line; the semicolon makes the string unusable for
+anything, so it can't be purposeful in your code).
 
 =head1 LIMITATIONS
 
