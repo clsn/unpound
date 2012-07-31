@@ -10,20 +10,25 @@ sub import {
     @keywords=@_;
     @keywords=(grep !/[^A-Za-z0-9_]/, @keywords); # Only single words, no metachars, ok?
     $CmtRE=join q(|),@keywords;
+# return 1 unless $CmtRE;
 }
 
 use Filter::Simple;
 
 FILTER_ONLY 
     code => sub {
-	# Try for a shorthand for print?
-	s/#[A-Za-z0-9_#]*\b(?:${CmtRE})\b[A-Za-z0-9_#]*>\s*(.*)$/print <<fFilLTereD\n$1\nfFilLTereD\n;/gm;
-	s/#[A-Za-z0-9_#]*\b(?:${CmtRE})\b[A-Za-z0-9_#]*#//g;
+	if ($CmtRE) {
+	    # Shorthand for print
+	    s/#[A-Za-z0-9_#]*\b(?:${CmtRE})\b[A-Za-z0-9_#]*>\s+(.*)$/print <<fFilLTereD\n$1\nfFilLTereD\n;/gm;
+	    s/#[A-Za-z0-9_#]*\b(?:${CmtRE})\b[A-Za-z0-9_#]*#\s+//g;
+	}
 },
     all => sub {
-	s/^\s*${CmtRE}\s*$//gms;
-	s/^\s*;\s*<<\s*'${CmtRE}'//gms;
-};
+	if ($CmtRE) {
+	    s/^(?:${CmtRE})$//gms;
+	    s/^\s*;\s*<<\s*'${CmtRE}'//gms;
+	}
+}, qr/#END%UNPOUND#/;
 1;
 __END__
 
@@ -74,11 +79,31 @@ here-strings.
     foo
     ;
 
-The string comment header must appear just as shown: on its own line, with
-the keyword surrounded by single quotes, and the << must be preceded by a
-semicolon (just in case you have some code that uses a here-string that
-starts on its own line; the semicolon makes the string unusable for
-anything, so it can't be purposeful in your code).
+The string comment header must appear just as shown: on its own line,
+with the keyword surrounded by single quotes, and the << must be
+preceded by a semicolon (just in case you have some code that uses a
+here-string that starts on its own line; the semicolon makes the
+string unusable for anything, so it can't be purposeful in your code).
+When "foo" is selected, Unpound will delete lines that look like
+";<<'foo'" and lines that have only "foo" on them, so this code will
+be uncommented.
+
+=head2 One or the Other
+
+You can even use this to set up code to be B<commented>, so you can
+have code that acts one way when debugging is off and does I<something
+else> (not just more things) when debugging is on.  Consider:
+
+    #debug# print "Doing debugging things.\n";
+    
+    #debug# ;<<'XxXxXx';
+    print "Doing normal things, which will NOT be done when debugging.\n";
+    #debug# XxXxXx
+    #debug# ;
+
+The "normal" code is eaten into the dummy string when debug is
+selected.  Make sure there is no whitespace after your string
+terminator (Unpound will eat the whitespace before it)
 
 =head2 Print Shorthand
 
@@ -104,7 +129,7 @@ numbers, and underscores.
 
 Although you can use your keywords inside quotes in ordinary code without
 their being affected by deletion, they will be affected in quotes inside
-uncommented code.  That is:
+code that becomes uncommented.  That is:
 
     print "This line will print #foo# and #bar# properly no matter what.\n";
     #foo# print "But when uncommented, this (#foo#) will be empty.\n";
@@ -114,6 +139,16 @@ uncommented code.  That is:
 Basically, giving X as a parameter will cause C<#X#> to disappear
 everywhere in the I<code>, but not in strings.  However, strings that were
 commented out I<before> the filtering count as code too.
+
+=item -
+
+For reasons I don't yet understand, a file that has a format at the
+end (or anwhere else?) makes Text::Balanced break, and you get a
+"substr outside of a string" error.  It seems to have to do with how
+long the source is before the format as well.  At any rate, there is a
+terminator, C<#END%UNPOUND#>, which you can include in your code to
+end the action of Unpound; everything after that will be unprocessed.
+Using the terminator before the format seems to help.
 
 =back
 
