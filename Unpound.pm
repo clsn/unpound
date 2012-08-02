@@ -5,30 +5,53 @@ use strict;
 
 my @keywords;
 my $CmtRE;
+my ($code,$all);
 sub import {
     my $thispack=shift;
     @keywords=@_;
     @keywords=(grep !/[^A-Za-z0-9_]/, @keywords); # Only single words, no metachars, ok?
     $CmtRE=join q(|),@keywords;
-# return 1 unless $CmtRE;
-}
-
-use Filter::Simple;
-
-FILTER_ONLY 
-    code => sub {
-	if ($CmtRE) {
+    # Only filter if things are specified, otherwise we'll remove way too
+    # many comments.
+    if ($CmtRE) {
+	$code=sub {
 	    # Shorthand for print
 	    s/#[A-Za-z0-9_#]*\b(?:${CmtRE})\b[A-Za-z0-9_#]*>\s+(.*)$/print <<fFilLTereD\n$1\nfFilLTereD\n;/gm;
 	    s/#[A-Za-z0-9_#]*\b(?:${CmtRE})\b[A-Za-z0-9_#]*#\s+//g;
-	}
-},
-    all => sub {
-	if ($CmtRE) {
+	};
+	
+	$all=sub {
 	    s/^(?:${CmtRE})$//gms;
-	    s/^\s*;\s*<<\s*'${CmtRE}'//gms;
+	    s/^\s*;\s*<<\s*'(?:${CmtRE})'//gms;
 	}
-}, qr/#END%UNPOUND#/;
+    }
+    else {
+	$code=sub { ; };
+	$all=sub { ; };
+    }
+}
+# Allow access to keywords, commentre...
+sub keywords { return @keywords; }
+sub CmtRE { return $CmtRE; }
+
+use Filter::Simple;
+
+# As I discovered with pain, since I was working on a v5.8
+# installation, Filter::Simple has a bug in FILTER_ONLY in v5.8, but
+# not in v5.10 (I don't know about v5.9).  So versions below v5.10
+# will get a plain FILTER.
+
+if ($] >= 5.010) {    
+    FILTER_ONLY
+	code => sub { &$code },
+	all => sub { &$all };
+}
+else {
+    FILTER {
+	&$code;
+	&$all;
+    }
+}
 1;
 __END__
 
@@ -140,15 +163,69 @@ Basically, giving X as a parameter will cause C<#X#> to disappear
 everywhere in the I<code>, but not in strings.  However, strings that were
 commented out I<before> the filtering count as code too.
 
+This can produce some some unfortunate issues.  Consider:
+
+     #keyword# print "This is a string with #keyword> in it.";
+
+Since the auto-print feature does more than just delete its keyword, also
+eating the rest of the line, this will expand to:
+
+    print "This is a string with a print<<fFilLTereD
+    in it.";
+    fFilLTereD
+    ;
+
+Which naturally is not going to sit well with the rest of the parser.
+Moral of the story: avoid keywords that might occur inside strings with
+#-signs in front of/around them.
+
+=over 4
+
+=item NOTE
+
+The above applies to Perl versions 5.10 and above.  Due to a bug in
+Filter::Simple in lower versions of Perl, filtering only the code can
+produce bizarre and unexpected bugs in the presence of things like
+here-strings or formats, so Unpound will filter code, strings, and all on
+those versions (Ref. L<http://www.perlmonks.org/?node_id=513511>).  That
+means that the above-referenced problem with C<#keyword> can happen even in
+non-unpounded strings on lower versions of perl.
+
+=back
+
 =item -
 
-For reasons I don't yet understand, a file that has a format at the
-end (or anwhere else?) makes Text::Balanced break, and you get a
-"substr outside of a string" error.  It seems to have to do with how
-long the source is before the format as well.  At any rate, there is a
-terminator, C<#END%UNPOUND#>, which you can include in your code to
-end the action of Unpound; everything after that will be unprocessed.
-Using the terminator before the format seems to help.
+To use Unpound inside a module which is going to be included via
+C<use> from somewhere else, you have to get sneaky.  Orinarily, the
+filters that apply to the base program don't reach into included
+libraries, which makes sense, since those libraries might have been
+written by anyone.  But sometimes you want to debug a library I<in
+situ>, where it's being used by another program already.  For that,
+you have to do some work at the top of the module to explicitly
+"inherit" Unpound.  Even though this is flagged with BEGIN, it won't
+apply to stuff before it in your file, presumably because all import
+stuff is in BEGIN anyway.  So put this at the B<top> of your file.  It
+doesn't have to be before the C<package> statement, but might as well
+be.
+
+    # For use with Unpound for debugging
+    BEGIN { 
+        no strict;
+	if (exists($INC{'Filter/Unpound.pm'})) {
+	    my @z=Filter::Unpound::keywords;
+	    # watch for bareword interpretation...
+	    if (@z && $z[0] ne 'Filter::Unpound::keywords') {
+		# Import throws away the first argument.
+		Filter::Unpound::import("Dummy", @z);
+		print "about to use with ".(Filter::Unpound::CmtRE)."\n";
+	    }
+	}
+    }
+
+Unfortunately, this code doesn't disappear into harmless comments when
+there's no Unpound in use (though it does disappear into harmless
+code).
+
 
 =back
 
