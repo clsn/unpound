@@ -13,6 +13,10 @@ sub import {
 # return 1 unless $CmtRE;
 }
 
+# Allow access to keywords, commentre...
+sub keywords { return @keywords; }
+sub CmtRE { return $CmtRE; }
+
 use Filter::Simple;
 
 FILTER_ONLY 
@@ -149,6 +153,40 @@ long the source is before the format as well.  At any rate, there is a
 terminator, C<#END%UNPOUND#>, which you can include in your code to
 end the action of Unpound; everything after that will be unprocessed.
 Using the terminator before the format seems to help.
+
+=item -
+
+To use Unpound inside a module which is going to be included via C<use>
+from somewhere else, you have to get sneaky.  Ordinarily, the filters that
+apply to the base program don't reach into included libraries, which makes
+sense, since those libraries might have been written by anyone.  But
+sometimes you want to debug a library I<in situ>, where it's being used by
+another program already.  You can of course do C<use Filter::Unpound
+qw(...)> of course, but you're more likely to want to be able to specify
+Filter::Unpound on the command line when running the main program.  For
+that, you have to do some work at the top of the module to explicitly
+"inherit" Unpound.  Even though this is flagged with BEGIN, it won't apply
+to stuff before it in your file, presumably because all import stuff is in
+BEGIN anyway.  So put this at the B<top> of your file.
+
+    # For use with Unpound for debugging
+    BEGIN { 
+        no strict;
+	if (exists($INC{'Filter/Unpound.pm'})) {
+	    my @z=Filter::Unpound::keywords;
+	    # watch for bareword interpretation...
+	    if (@z && $z[0] ne 'Filter::Unpound::keywords') {
+		# Import throws away the first argument.
+		Filter::Unpound::import("Dummy", @z);
+		print "about to use with ".(Filter::Unpound::CmtRE)."\n";
+	    }
+	}
+    }
+
+Unfortunately, this code doesn't disappear into harmless comments when
+there's no Unpound in use (though it does disappear into harmless
+code).
+
 
 =back
 
