@@ -13,8 +13,9 @@ sub import {
     $CmtRE=join q(|),@keywords;
     # Only filter if things are specified, otherwise we'll remove way too
     # many comments.
+    print "($CmtRE ; @keywords)\n";
     if ($CmtRE) {
-	$code=sub {
+	$code=sub {	    
 	    # Shorthand for print
 	    s/#[A-Za-z0-9_#]*\b(?:${CmtRE})\b[A-Za-z0-9_#]*>\s+(.*)$/print <<fFilLTereD\n$1\nfFilLTereD\n;/gm;
 	    s/#[A-Za-z0-9_#]*\b(?:${CmtRE})\b[A-Za-z0-9_#]*#\s+//g;
@@ -22,7 +23,7 @@ sub import {
 	
 	$all=sub {
 	    s/^(?:${CmtRE})$//gms;
-	    s/^\s*;\s*<<\s*'(?:${CmtRE})'//gms;
+	    s/^\s*;\s*(?:(?:my\s+)?\$__UNPOUND\s*=)?\s*<<\s*'(?:${CmtRE})'//gms;
 	}
     }
     else {
@@ -102,14 +103,30 @@ here-strings.
     foo
     ;
 
+    ;my $__UNPOUND=<<'bar'
+    print "Also ignored code.\n";
+    print "The special UNPOUND dummy variable is for avoiding warnings\n";
+    bar
+    ;
+
+    ;$__UNPOUND=<<'lastly'
+    print "Same as above... ";
+    print "(except didn't declare $UNPOUND again.)\n";
+    lastly
+    ;
+
 The string comment header must appear just as shown: on its own line,
 with the keyword surrounded by single quotes, and the << must be
 preceded by a semicolon (just in case you have some code that uses a
 here-string that starts on its own line; the semicolon makes the
-string unusable for anything, so it can't be purposeful in your code).
-When "foo" is selected, Unpound will delete lines that look like
-";<<'foo'" and lines that have only "foo" on them, so this code will
-be uncommented.
+string unusable for anything, so it can't be purposeful in your code.)
+Note that this will cause "void" warnings (during ordinary, not
+Unpounded, execution) if you have those enabled.  You can optionally
+assign to a variable called $UNPOUND (you have to use that name) if
+you want to avoid the warnings.  You can also optionally declare
+$UNPOUND with "my" on the line as shown above.  When "foo" is
+selected, Unpound will delete lines that look like ";<<'foo'" and
+lines that have only "foo" on them, so this code will be uncommented.
 
 =head2 One or the Other
 
@@ -226,6 +243,11 @@ Unfortunately, this code doesn't disappear into harmless comments when
 there's no Unpound in use (though it does disappear into harmless
 code).
 
+=item -
+
+Tricks like multi-line comments have to be used between statements,
+not within them, so you can't do stuff like uncommenting part of a
+list with them.
 
 =back
 

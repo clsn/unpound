@@ -16,10 +16,23 @@ print "Always, but dangerous in v5.8 with #line> which can be a syntax error!";
 #danger1> This could also be dangerous, with #danger1> in it.
 #danger2# print "And what about printing with #danger2> in the line?"
 
+{ no warnings;
 ;<<'multi'
     print "..Multi-line comment, protected by 'multi'";
     print "..Words like #multi# *may* be affected.";
 multi
+    ;
+};
+
+;my $__UNPOUND = <<'unmulti'
+    print "\n..More multi-line, this time shoved into \$__UNPOUND\n";
+    print "..so as to avoid warnings.\n";
+unmulti
+    ;
+
+; $__UNPOUND=<<'unmulti'
+    print "\n..Last, same as above, but undeclared.\n"
+unmulti
     ;
 
 #line#inline# print ".For 'line' _or_ 'inline'";
