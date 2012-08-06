@@ -6,6 +6,8 @@ use strict;
 my @keywords;
 my $CmtRE;
 my ($code,$all);
+our $VERSION=1.0;
+
 sub import {
     my $thispack=shift;
     @keywords=@_;
@@ -231,7 +233,7 @@ stuff is in BEGIN anyway.  So put this at the B<top> of your file.
 	    if (@z && $z[0] ne 'Filter::Unpound::keywords') {
 		# Import throws away the first argument.
 		Filter::Unpound::import("Dummy", @z);
-		print "about to use with ".(Filter::Unpound::CmtRE)."\n";
+                # print "about to use with ".(Filter::Unpound::CmtRE)."\n";
 	    }
 	}
     }

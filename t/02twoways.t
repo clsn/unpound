@@ -2,7 +2,7 @@
 use Test::More "no_plan";
 use strict;
 
-is(qx"$^X oneorother.pl",
+is(qx"$^X t/oneorother.pl",
    <<'EEOOFF', "no debug");
 Start
 Debugging is OFF
@@ -11,7 +11,7 @@ EEOOFF
     ;
 
 
-is(qx"$^X -MFilter::Unpound=debug oneorother.pl",
+is(qx"$^X -MFilter::Unpound=debug t/oneorother.pl",
    <<'EEOOFF', "debug enabled");
 Start
 . Debugging is ON

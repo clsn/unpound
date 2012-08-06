@@ -3,7 +3,7 @@
 use Test::More "no_plan";
 use strict;
 
-is(qx"$^X samplecode.pl",
+is(qx"$^X t/samplecode.pl",
    <<'EEOOFF', "no unpounding.");
 Begin.
 Always.
@@ -15,7 +15,7 @@ EEOOFF
 
 
 
-is(qx"$^X -MFilter::Unpound=line samplecode.pl",
+is(qx"$^X -MFilter::Unpound=line t/samplecode.pl",
    <<'EEOOFF', "unpound line");
 Begin.
 . 'line'
@@ -32,7 +32,7 @@ EEOOFF
     ;
 
 
-is(qx"$^X -MFilter::Unpound=inline samplecode.pl",
+is(qx"$^X -MFilter::Unpound=inline t/samplecode.pl",
    <<'EEOOFF', "unpound inline");
 Begin.
 Always.
@@ -45,7 +45,7 @@ EEOOFF
     ;
 
 
-is(qx"$^X -MFilter::Unpound=line,inline samplecode.pl",
+is(qx"$^X -MFilter::Unpound=line,inline t/samplecode.pl",
    <<'EEOOFF', "unpound line and inline");
 Begin.
 . 'line'
@@ -65,7 +65,7 @@ EEOOFF
 
 
 
-is(qx"$^X -MFilter::Unpound=multi samplecode.pl",
+is(qx"$^X -MFilter::Unpound=multi t/samplecode.pl",
    <<'EEOOFF', "unpound multi");
 Begin.
 Always.
@@ -78,7 +78,7 @@ EEOOFF
 ;
 
 
-is(qx"$^X -MFilter::Unpound=unmulti samplecode.pl",
+is(qx"$^X -MFilter::Unpound=unmulti t/samplecode.pl",
    <<'EEOOFF', 'unpound unmulti');
 Begin.
 Always.
