@@ -13,7 +13,6 @@ sub import {
     $CmtRE=join q(|),@keywords;
     # Only filter if things are specified, otherwise we'll remove way too
     # many comments.
-    print "($CmtRE ; @keywords)\n";
     if ($CmtRE) {
 	$code=sub {	    
 	    # Shorthand for print
@@ -122,9 +121,9 @@ here-string that starts on its own line; the semicolon makes the
 string unusable for anything, so it can't be purposeful in your code.)
 Note that this will cause "void" warnings (during ordinary, not
 Unpounded, execution) if you have those enabled.  You can optionally
-assign to a variable called $UNPOUND (you have to use that name) if
+assign to a variable called $__UNPOUND (you have to use that name) if
 you want to avoid the warnings.  You can also optionally declare
-$UNPOUND with "my" on the line as shown above.  When "foo" is
+$__UNPOUND with "my" on the line as shown above.  When "foo" is
 selected, Unpound will delete lines that look like ";<<'foo'" and
 lines that have only "foo" on them, so this code will be uncommented.
 
@@ -221,9 +220,7 @@ situ>, where it's being used by another program already.  For that,
 you have to do some work at the top of the module to explicitly
 "inherit" Unpound.  Even though this is flagged with BEGIN, it won't
 apply to stuff before it in your file, presumably because all import
-stuff is in BEGIN anyway.  So put this at the B<top> of your file.  It
-doesn't have to be before the C<package> statement, but might as well
-be.
+stuff is in BEGIN anyway.  So put this at the B<top> of your file.
 
     # For use with Unpound for debugging
     BEGIN { 
