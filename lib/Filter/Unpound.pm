@@ -72,13 +72,13 @@ Unpound - Simple "uncomment" debugging.
 
 =head1 DESCRIPTION
 
-An even more simplified source filter, based on Filter::Simple and somewhat
-like Filter::Uncomment, but with a different syntax that might be easier to
-work with.
+An even more simplified source filter, based on Filter::Simple and
+somewhat like Filter::Uncomment, but with a different syntax that
+might be easier to work with.
 
-Anything commented out by a comment in the form #word# can be uncommented
-by including this package with suitable arguments.  Essentially, if you
-execute
+Anything commented out by a comment in the form C<#word#> can be
+uncommented by including this package with suitable arguments.
+Essentially, if you execute
 
     perl -MFilter::Unpound=word script.pl
 
@@ -123,11 +123,12 @@ here-string that starts on its own line; the semicolon makes the
 string unusable for anything, so it can't be purposeful in your code.)
 Note that this will cause "void" warnings (during ordinary, not
 Unpounded, execution) if you have those enabled.  You can optionally
-assign to a variable called $__UNPOUND (you have to use that name) if
-you want to avoid the warnings.  You can also optionally declare
-$__UNPOUND with "my" on the line as shown above.  When "foo" is
-selected, Unpound will delete lines that look like ";<<'foo'" and
-lines that have only "foo" on them, so this code will be uncommented.
+assign to a variable called C<$__UNPOUND> (you have to use that name)
+if you want to avoid the warnings.  You can also optionally declare
+C<$__UNPOUND> with "C<my>" on the line as shown above.  When "foo" is
+selected, Unpound will delete lines that look like "C<<< ;<<'foo' >>>"
+and lines that have only "C<foo>" on them, so this code will be
+uncommented.
 
 =head2 One or the Other
 
@@ -204,10 +205,10 @@ Moral of the story: avoid keywords that might occur inside strings with
 The above applies to Perl versions 5.10 and above.  Due to a bug in
 Filter::Simple in lower versions of Perl, filtering only the code can
 produce bizarre and unexpected bugs in the presence of things like
-here-strings or formats, so Unpound will filter code, strings, and all on
-those versions (Ref. L<http://www.perlmonks.org/?node_id=513511>).  That
-means that the above-referenced problem with C<#keyword> can happen even in
-non-unpounded strings on lower versions of perl.
+here-strings or formats, so Unpound will filter code, strings, and all
+on those versions (Ref. L<http://www.perlmonks.org/?node_id=513511>).
+That means that the above-referenced problem with C<< #keyword> >> can
+happen even in non-unpounded strings on lower versions of perl.
 
 =back
 
@@ -233,7 +234,6 @@ stuff is in BEGIN anyway.  So put this at the B<top> of your file.
 	    if (@z && $z[0] ne 'Filter::Unpound::keywords') {
 		# Import throws away the first argument.
 		Filter::Unpound::import("Dummy", @z);
-                # print "about to use with ".(Filter::Unpound::CmtRE)."\n";
 	    }
 	}
     }
@@ -249,5 +249,20 @@ not within them, so you can't do stuff like uncommenting part of a
 list with them.
 
 =back
+
+=head1 DIAGNOSTICS
+
+None intended to come from Unpound itself.
+
+=head1 AUTHOR
+
+Mark E. Shoulson <mark@shoulson.com>
+
+=head1 COPYRIGHT
+
+Copyright (c) 2012, Mark Shoulson.  All Rights Reserved.  This module
+is free software.  It may be used, redistributed, and/or modified
+under the terms of the Perl Artistic License (see
+L<http://www.perl.com/perl/misc/Artistic.html>)
 
 =cut
