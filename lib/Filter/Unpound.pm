@@ -10,8 +10,7 @@ our $VERSION=1.0;
 
 sub import {
     my $thispack=shift;
-    @keywords=@_;
-    @keywords=(grep !/[^A-Za-z0-9_]/, @keywords); # Only single words, no metachars, ok?
+    @keywords=(grep !/[^A-Za-z0-9_]/, @_); # Only single words, no metachars, ok?
     $CmtRE=join q(|),@keywords;
     # Only filter if things are specified, otherwise we'll remove way too
     # many comments.
@@ -32,9 +31,9 @@ sub import {
 	$all=sub { ; };
     }
 }
-# Allow access to keywords, commentre...
-sub keywords { return @keywords; }
-sub CmtRE { return $CmtRE; }
+# Allow access to keywords, commentre... read-only, you shouldn't try to set.
+sub keywords () { return @keywords; }
+sub CmtRE () { return $CmtRE; }
 
 use Filter::Simple;
 
@@ -162,12 +161,12 @@ This feature is not available for multi-line uncomments.
 
 =over 4
 
-=item -
+=item *
 
 The tags used must be simple ASCII words, consisting only of letters,
 numbers, and underscores.
 
-=item -
+=item *
 
 Although you can use your keywords inside quotes in ordinary code without
 their being affected by deletion, they will be affected in quotes inside
@@ -212,7 +211,7 @@ happen even in non-unpounded strings on lower versions of perl.
 
 =back
 
-=item -
+=item *
 
 To use Unpound inside a module which is going to be included via
 C<use> from somewhere else, you have to get sneaky.  Orinarily, the
@@ -242,7 +241,24 @@ Unfortunately, this code doesn't disappear into harmless comments when
 there's no Unpound in use (though it does disappear into harmless
 code).
 
-=item -
+=item *
+
+You can also sidestep this confusion by making your files sensitive to
+an environment variable to control unpounding.  It has to be in a
+BEGIN clause at the top:
+
+    BEGIN {
+        use Filter::Unpound split /[, ]+/,$ENV{UNPOUND}
+    }
+
+Then once you say "UNPOUND=debug,foo,bar" in your shell, Unpound
+will pick it up, and if the variable is not set, nothing will happen.
+(You can't do a check for the variable and do the C<use> inside an
+C<if> statement, because then the filter will just go out of scope at
+the end of the C<if>).  You can use this in included packages and so
+on so as not to bother with the procedure described above.
+
+=item *
 
 Tricks like multi-line comments have to be used between statements,
 not within them, so you can't do stuff like uncommenting part of a
