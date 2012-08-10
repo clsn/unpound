@@ -81,11 +81,13 @@ Essentially, if you execute
 
     perl -MFilter::Unpound=word script.pl
 
-then the string "#word#" is removed wherever it may appear in the code--
-which may then expose some previously commented-out instructions.  You can
-have several different "uncomment" tags and use them selectively.  A line
-tagged with more than one, as above, is activated if I<any> one is
-activated.  You can make it have to have I<all> the tags this way:
+then the string "#word#" is removed wherever it may appear in the
+code--which may then expose some previously commented-out
+instructions.  You can have several different "uncomment" tags and use
+them selectively.  A line tagged with more than one, as above, is
+activated if I<any> one is activated (any I<block> of keywords
+containing C<#word#> is removed, not just the single one).  You can
+make it have to have I<all> the tags this way:
 
    #foo#bar# print "This line prints with either foo or bar.\n";
    #foo# #bar# print "This line prints only with both.\n";
@@ -93,6 +95,9 @@ activated.  You can make it have to have I<all> the tags this way:
 You would have to say C<perl -MFilter::Unpound=foo,bar> to get the second
 line to print, whereas either C<perl -MFilter::Unpound=foo> or C<perl
 -MFilter::Unpound=bar> will suffice for the first.
+
+Note that the C<#word#> must be followed by whitespace, before the
+code that is being uncommented.
 
 You can also uncomment multi-line pieces of code which are ordinarily
 commented out by wrapping them in a special "string comment" using Perl
@@ -148,12 +153,13 @@ terminator (Unpound will eat the whitespace before it)
 
 =head2 Print Shorthand
 
-Since most of the time debugging statements are print statements, you can
-save the hassle of typing "print" (or even "say") all the time by ending
-your single-line tag with '>'.  The rest of the line (after whitespace)
-will be taken as a double-quoted string to be printed, followed by a
-newline.  The line is quoted as a here-string, so there shouldn't be any
-problems with accidental end-quoting.
+Since most of the time debugging statements are print statements, you
+can save the hassle of typing "print" (or even "say") all the time by
+ending your single-line tag with '>' (the C<#> before the C<E<gt>> is
+optional).  The rest of the line (after whitespace) will be taken as a
+double-quoted string to be printed, followed by a newline.  The line
+is quoted as a here-string, so there shouldn't be any problems with
+accidental end-quoting.
 
 This feature is not available for multi-line uncomments.
 
@@ -220,43 +226,26 @@ libraries, which makes sense, since those libraries might have been
 written by anyone.  But sometimes you want to debug a library I<in
 situ>, where it's being used by another program already.  For that,
 you have to do some work at the top of the module to explicitly
-"inherit" Unpound.  Even though this is flagged with BEGIN, it won't
-apply to stuff before it in your file, presumably because all import
-stuff is in BEGIN anyway.  So put this at the B<top> of your file.
+"inherit" Unpound.  You can detect the existence of a heritable
+Unpound and inherit the keywords with the C<if> pragma:
 
-    # For use with Unpound for debugging
-    BEGIN { 
-        no strict;
-	if (exists($INC{'Filter/Unpound.pm'})) {
-	    my @z=Filter::Unpound::keywords;
-	    # watch for bareword interpretation...
-	    if (@z && $z[0] ne 'Filter::Unpound::keywords') {
-		# Import throws away the first argument.
-		Filter::Unpound::import("Dummy", @z);
-	    }
-	}
-    }
+    use if !!(eval "&Filter::Unpound::keywords"), "Filter::Unpound" => eval("&Filter::Unpound::keywords");
 
-Unfortunately, this code doesn't disappear into harmless comments when
-there's no Unpound in use (though it does disappear into harmless
-code).
+(the double-negative is to prevent complaints about too few arguments
+if the eval if false).  Unfortunately, this code doesn't disappear
+into harmless comments when there's no Unpound in use (though it does
+disappear into harmless code).
 
 =item *
 
 You can also sidestep this confusion by making your files sensitive to
-an environment variable to control unpounding.  It has to be in a
-BEGIN clause at the top:
+an environment variable to control unpounding.
 
-    BEGIN {
-        use Filter::Unpound split /[, ]+/,$ENV{UNPOUND}
-    }
+    use Filter::Unpound split /[, ]+/,$ENV{UNPOUND}
 
-Then once you say "UNPOUND=debug,foo,bar" in your shell, Unpound
-will pick it up, and if the variable is not set, nothing will happen.
-(You can't do a check for the variable and do the C<use> inside an
-C<if> statement, because then the filter will just go out of scope at
-the end of the C<if>).  You can use this in included packages and so
-on so as not to bother with the procedure described above.
+Then once you say "UNPOUND=debug,foo,bar" in your shell, Unpound will
+pick it up, and if the variable is not set, nothing will happen.
+
 
 =item *
 
@@ -265,6 +254,15 @@ not within them, so you can't do stuff like uncommenting part of a
 list with them.
 
 =back
+
+=head1 BUGS
+
+The C<keywords> and C<CmtRE> methods, which return the list of
+keywords and the regex constructed to detect them, respectively, only
+return those values set by the last importation of Unpound.  If there
+were other keywords set either by multiple C<use> statements in this
+module or by modules higher up on the "inclusion chain" using some
+kind of inheritance scheme, they will not be listed.
 
 =head1 DIAGNOSTICS
 
