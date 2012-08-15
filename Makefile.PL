@@ -8,5 +8,6 @@ WriteMakefile(
     ABSTRACT => 'Selective uncommenting for debugging.',
     AUTHOR => 'Mark E. Shoulson <mark@shoulson.com>',
     PREREQ_PM => { 'Filter::Simple' => 0 },
-    BUILD_REQUIRES => { 'Filter::Simple' => 0, 'Test::More' => 0}
+    BUILD_REQUIRES => { 'Filter::Simple' => 0, 'Test::More' => 0},
+    LICENSE => 'perl'
     );

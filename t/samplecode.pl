@@ -27,13 +27,13 @@ multi
     ;
 };
 
-;my $__UNPOUND = <<'unmulti'
+;my $dummy = <<'unmulti'	# comment here, shouldn't affect.
     print "\n.. Multi-line, 'unmulti'";
     print ".. variable declared\n";
 unmulti
     ;
 
-; $__UNPOUND=<<'unmulti'
+; $dummy=<<'unmulti'
     print "\n.. Multi-line, 'unmulti'; undeclared."
 unmulti
     ;

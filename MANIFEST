@@ -1,6 +1,7 @@
 Makefile.PL
 MANIFEST
 README.md
+Changes
 lib/Filter/Unpound.pm
 t/00load.t
 t/01filter.t

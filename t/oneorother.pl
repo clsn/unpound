@@ -6,7 +6,7 @@ print "Debugging is OFF\n";
 #debug# ;
 #debug# print ". Debugging is ON\n";
 
-#debug# ;my $__UNPOUND=<<'EEOOFF'
+#debug# ;my $X=<<'EEOOFF'
 print "Multi-line debugging... ";
 print "... is OFF\n";
 #debug# EEOOFF

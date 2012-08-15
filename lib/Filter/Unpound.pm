@@ -6,7 +6,7 @@ use strict;
 my @keywords;
 my $CmtRE;
 my ($code,$all);
-our $VERSION=1.0;
+our $VERSION=1.1;
 
 sub import {
     my $thispack=shift;
@@ -23,7 +23,7 @@ sub import {
 	
 	$all=sub {
 	    s/^(?:${CmtRE})$//gms;
-	    s/^\s*;\s*(?:(?:my\s+)?\$__UNPOUND\s*=)?\s*<<\s*'(?:${CmtRE})'//gms;
+	    s/^\s*;\s*(?:(?:my\s+)?\$\w+\s*=\s*)?<<\s*'(?:$CmtRE)'\s*(?:#.*)?$//gms;
 	}
     }
     else {
@@ -71,8 +71,8 @@ Unpound - Simple "uncomment" debugging.
 
 =head1 DESCRIPTION
 
-An even more simplified source filter, based on Filter::Simple and
-somewhat like Filter::Uncomment, but with a different syntax that
+An even more simplified source filter, based on L<Filter::Simple> and
+somewhat like L<Filter::Uncomment>, but with a different syntax that
 might be easier to work with.
 
 Anything commented out by a comment in the form C<#word#> can be
@@ -83,8 +83,10 @@ Essentially, if you execute
 
 then the string "#word#" is removed wherever it may appear in the
 code--which may then expose some previously commented-out
-instructions.  You can have several different "uncomment" tags and use
-them selectively.  A line tagged with more than one, as above, is
+instructions.  This may make a huge difference in performance (in a
+tight loop) versus calling a debug function that checks if a debug
+variable is set.  You can have several different "uncomment" tags and
+use them selectively.  A line tagged with more than one, as above, is
 activated if I<any> one is activated (any I<block> of keywords
 containing C<#word#> is removed, not just the single one).  You can
 make it have to have I<all> the tags this way:
@@ -108,31 +110,35 @@ here-strings.
     foo
     ;
 
-    ;my $__UNPOUND=<<'bar'
+    ;my $bar=<<'BAR'
     print "Also ignored code.\n";
-    print "The special UNPOUND dummy variable is for avoiding warnings\n";
-    bar
+    print "The dummy variable is for avoiding warnings\n";
+    BAR
     ;
 
-    ;$__UNPOUND=<<'lastly'
+    ;$bar=<<'BAR'
     print "Same as above... ";
-    print "(except didn't declare $UNPOUND again.)\n";
-    lastly
+    print "(except didn't declare \$bar again.)\n";
+    BAR
     ;
 
 The string comment header must appear just as shown: on its own line,
 with the keyword surrounded by single quotes, and the << must be
 preceded by a semicolon (just in case you have some code that uses a
 here-string that starts on its own line; the semicolon makes the
-string unusable for anything, so it can't be purposeful in your code.)
-Note that this will cause "void" warnings (during ordinary, not
-Unpounded, execution) if you have those enabled.  You can optionally
-assign to a variable called C<$__UNPOUND> (you have to use that name)
-if you want to avoid the warnings.  You can also optionally declare
-C<$__UNPOUND> with "C<my>" on the line as shown above.  When "foo" is
-selected, Unpound will delete lines that look like "C<<< ;<<'foo' >>>"
-and lines that have only "C<foo>" on them, so this code will be
-uncommented.
+string unusable for anything, so it can't be purposeful in your code.
+You shouldn't be using your Unpound keywords as ordinary delimiters
+anyway, though.)  Note that this will cause "void" warnings (during
+ordinary, not Unpounded, execution) if you have those enabled.  You
+can optionally assign to a variable if you want to avoid the warnings
+(in which case, of course, make sure that you don't use a variable
+with that name anywhere that could cause interference).  You can also
+optionally declare the variable with "C<my>" on the line as shown
+above.  When "foo" is selected, Unpound will delete lines that look
+like "C<<< ;<<'foo' >>>" (optionally assigned to a variable) and lines
+that have only "C<foo>" on them, so this code will be uncommented (so
+don't use the keywords as delimiters for anything important in the
+code, of course.)
 
 =head2 One or the Other
 
@@ -231,9 +237,9 @@ Unpound and inherit the keywords with the C<if> pragma:
 
     use if !!(eval "&Filter::Unpound::keywords"), "Filter::Unpound" => eval("&Filter::Unpound::keywords");
 
-(the double-negative is to prevent complaints about too few arguments
-if the eval if false).  Unfortunately, this code doesn't disappear
-into harmless comments when there's no Unpound in use (though it does
+(the double-negative prevents complaints about too few arguments if
+the C<eval> fails).  Unfortunately, this code doesn't disappear into
+harmless comments when there's no Unpound in use (though it does
 disappear into harmless code).
 
 =item *
@@ -242,6 +248,12 @@ You can also sidestep this confusion by making your files sensitive to
 an environment variable to control unpounding.
 
     use Filter::Unpound split /[, ]+/,$ENV{UNPOUND}
+
+or
+
+    BEGIN { eval 'use Filter::Unpound split /[ ,]+/,$ENV{UNPOUND};' }
+
+if you're not sure Filter::Unpound will even be in the library path.
 
 Then once you say "UNPOUND=debug,foo,bar" in your shell, Unpound will
 pick it up, and if the variable is not set, nothing will happen.
@@ -268,11 +280,16 @@ kind of inheritance scheme, they will not be listed.
 
 None intended to come from Unpound itself.
 
+=head1 SEE ALSO
+
+L<Filter::Uncomment>, L<Smart::Comments>, L<Devel::Comments>,
+L<Filter::cpp>.
+
 =head1 AUTHOR
 
 Mark E. Shoulson <mark@shoulson.com>
 
-=head1 COPYRIGHT
+=head1 COPYRIGHT AND LICENSE
 
 Copyright (c) 2012, Mark Shoulson.  All Rights Reserved.  This module
 is free software.  It may be used, redistributed, and/or modified
